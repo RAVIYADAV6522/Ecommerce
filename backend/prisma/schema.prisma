@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int            @id @default(autoincrement())
+  name      String         @unique
+  products  Product[]
+  materials RawMaterial[]
+}
+
+model Product {
+  id          Int             @id @default(autoincrement())
+  name        String
+  code        String          @unique
+  categoryId  Int
+  quantity    Int
+  imageUrl    String?
+  
+  category    Category        @relation(fields: [categoryId], references: [id])
+  materials   ProductMaterial[]
+  variants    ProductVariant[] // can have one to many relationship right ?
+
+  @@map("Products")
+}
+
+model ProductVariant {
+  id          Int         @id @default(autoincrement())
+  name        String      
+  price       Decimal     @db.Decimal(10,2)
+  quantity    Int         //a quantity that can specific to this varient 
+  productId   Int
+
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@map("Product_Variants")
+}
+
+model RawMaterial {
+  id          Int             @id @default(autoincrement())
+  name        String
+  code        String          @unique
+  categoryId  Int
+  price       Decimal         @db.Decimal(10,2)
+  quantity    Int
+  imageUrl    String?
+
+  category    Category        @relation(fields: [categoryId], references: [id])
+  products    ProductMaterial[]
+
+  @@map("Raw_Materials")
+}
+
+model ProductMaterial {
+  id           Int           @id @default(autoincrement())
+  productId    Int
+  materialId   Int
+  quantityUsed Int
+
+  product      Product       @relation(fields: [productId], references: [id])
+  material     RawMaterial   @relation(fields: [materialId], references: [id])
+
+  @@unique([productId, materialId])
+  @@map("Product_Materials")
+}
